@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "package": {
+      "commandName": "package",
+      "commandLineArgs": "test.json"
+    }
+  }
+}

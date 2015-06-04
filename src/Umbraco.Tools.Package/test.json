@@ -1,0 +1,6 @@
+﻿{
+    "dlls": ["../../../the-goring/Endzone.Describe/bin/Debug/Endzone.Describe.dll"],
+    "packageXmlTemplate": "../../../the-goring/Endzone.Describe/Package.xml",
+    "pluginFolder": "../../../the-goring/website/App_Plugins/Endzone"
+}
+
