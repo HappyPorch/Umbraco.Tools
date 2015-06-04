@@ -36,7 +36,7 @@ namespace Umbraco.Tools.Package
                                                   
 ");
 
-            if (args.Length == 0)
+            if (args.Length != 1 || !File.Exists(args[0]))
             {
                 Console.WriteLine(@"Usage: package settings.json 
 Output: a zip file with the package for Umbraco
