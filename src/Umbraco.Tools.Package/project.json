@@ -1,10 +1,10 @@
 {
   "version": "1.0.0-*",
-  "description": "",
-  "authors": [ "" ],
+  "description": "Install as a DNX command. Generates plugin packages for Umbraco. You give it dlls, back-office files and it updates the Package.xml file and compresses it into a single installable archive. Usage: dnx . package settings.json",
+  "authors": [ "Endzone.io", "Ondrej Pialek" ],
   "tags": [ "" ],
-  "projectUrl": "",
-  "licenseUrl": "",
+  "projectUrl": "https://github.com/EndzoneSoftware/Umbraco.Tools",
+  "licenseUrl": "http://unlicense.org/",
 
   "dependencies": {
     "Microsoft.Framework.ConfigurationModel": "1.0.0-beta4",
