@@ -86,9 +86,6 @@ settings.json structure:
 
             Console.WriteLine();
             Console.WriteLine("All done");
-            Console.WriteLine();
-
-            Console.ReadLine();
         }
     }
 }
