@@ -18,11 +18,28 @@ function Ensure-WDPowerShellMode {
 	}
 }
 
-function Sync-Sites {
-	try {
-		Write-Host " - Syncing site '$siteName' to server '$destinationServer'..." -NoNewline
+function Ensure-WebAdministrationModule {
+	$WebAdministrationModule = Get-Module -Name WebAdministration -ErrorAction:SilentlyContinue
+	
+	if($WebAdministrationModule -eq $null) {
+		
+		Write-Host " - Importing 'Web Administration' module..." -NoNewline
+		Import-Module WebAdministration -ErrorAction:SilentlyContinue -ErrorVariable e | Out-Null
+		
+		if($? -eq $false) {
+			throw " - failed to import the Web Administration module: $e"
+		} else {
+			Write-Host "OK" -ForegroundColor Green
+		}
+	} else {
+		Write-Host " - 'Web Administration' module already imported"
+	}
+}
 
-        
+function Build-PublishProfiles {
+	try {
+		Write-Host " - Creating publish profiles to source (localhost) and destination ('$destinationServer')..." -NoNewline
+
         New-WDPublishSettings -AgentType MSDepSvc -FileName source.publishsettings | Out-Null
 
         if($remoteUserName -eq $null) {
@@ -30,14 +47,26 @@ function Sync-Sites {
             New-WDPublishSettings -AgentType MSDepSvc -ComputerName $destinationServer -Credentials $cred -FileName destination.publishsettings | Out-Null
         } else {
             New-WDPublishSettings -AgentType MSDepSvc -ComputerName $destinationServer -UserID $remoteUserName -Password $remotePassword -FileName destination.publishsettings | Out-Null
-        }
-        
-        $Result = Sync-WDSite -ErrorAction:Stop -Verbose -Debug `
-            -IncludeAppPool `
+        }			
+	} catch {
+		$exception = $_.Exception
+		Write-Host "ERROR" -ForegroundColor:Red
+		throw " - Build-PublishProfiles failed: $exception"
+	}
+	
+	Write-Host "OK" -ForegroundColor Green
+}
+
+function Sync-Sites {
+	try {
+		Write-Host " - Syncing site '$siteName' to server '$destinationServer'..." -NoNewline
+
+        $Result = Sync-WDSite -ErrorAction:Stop `
             -SourceSite $siteName `
             -DestinationSite $siteName `
             -SourcePublishSettings source.publishsettings `
             -DestinationPublishSettings destination.publishsettings
+            #            -IncludeAppPool `
 
 			
 	} catch {
@@ -47,8 +76,33 @@ function Sync-Sites {
 	}
 	
 	Write-Host "OK" -ForegroundColor Green
-	Write-Host "Summary:"
-	$Result | Out-String
+	Write-Host "Summary:" -NoNewline
+	$Result | Out-String -NoNewline
+}
+
+function Set-Permissions {
+	try {
+		Write-Host " - Setting folder permissions for '$siteName' on '$destinationServer'..." -NoNewline
+
+        $site = Get-Website -Name $siteName
+        $appPoolName = $site.applicationPool
+        $rights = [System.Security.AccessControl.FileSystemRights]"ListDirectory,ReadData,Traverse,ExecuteFile,ReadAttributes,ReadPermissions,Read,ReadAndExecute,Modify,Write"
+
+        $Result = Set-WDAcl -ErrorAction:Stop
+            -DestinationPublishSettings destination.publishsettings `
+            -Destination $siteName `
+            -SetAclUser "IIS AppPool\$appPoolName" `
+            -SetAclAccess $rights
+
+	} catch {
+		$exception = $_.Exception
+		Write-Host "ERROR" -ForegroundColor:Red
+		throw " - Set-WDAcl failed: $exception"
+	}
+	
+	Write-Host "OK" -ForegroundColor Green
+	Write-Host "Summary:" -NoNewline
+	$Result | Out-String -NoNewline
 }
 
 try {
@@ -56,7 +110,10 @@ try {
 	Write-Host "deployment started"
 	
 	Ensure-WDPowerShellMode
+    Ensure-WebAdministrationModule
+    Build-PublishProfiles
 	Sync-Sites
+    Set-Permissions
 	
 	Write-Host "deployment finished successfully"
 	
