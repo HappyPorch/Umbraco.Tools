@@ -77,7 +77,7 @@ function Sync-Sites {
 	
 	Write-Host "OK" -ForegroundColor Green
 	Write-Host "Summary:" -NoNewline
-	$Result | Out-String -NoNewline
+	$Result | Out-String
 }
 
 function Set-Permissions {
@@ -88,7 +88,7 @@ function Set-Permissions {
         $appPoolName = $site.applicationPool
         $rights = [System.Security.AccessControl.FileSystemRights]"ListDirectory,ReadData,Traverse,ExecuteFile,ReadAttributes,ReadPermissions,Read,ReadAndExecute,Modify,Write"
 
-        $Result = Set-WDAcl -ErrorAction:Stop
+        $Result = Set-WDAcl -ErrorAction:Stop `
             -DestinationPublishSettings destination.publishsettings `
             -Destination $siteName `
             -SetAclUser "IIS AppPool\$appPoolName" `
@@ -102,7 +102,7 @@ function Set-Permissions {
 	
 	Write-Host "OK" -ForegroundColor Green
 	Write-Host "Summary:" -NoNewline
-	$Result | Out-String -NoNewline
+	$Result | Out-String
 }
 
 try {
