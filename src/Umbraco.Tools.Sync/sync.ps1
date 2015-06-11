@@ -59,9 +59,9 @@ function Build-PublishProfiles {
 
 function Get-Site {
 	try {
-		Write-Host " - Obtaining local site '$siteName' information..." -NoNewline
+		Write-Host " - Obtaining local site information for '$siteName'..." -NoNewline
 
-        $site = Get-Website -Name $siteName        
+        $site = Get-Website -Name "*$siteName"       
 	} catch {
 		$exception = $_.Exception
 		Write-Host "ERROR" -ForegroundColor:Red
@@ -134,7 +134,8 @@ function Sync-Sites {
             -SourceSite $siteName `
             -DestinationSite $siteName `
             -SourcePublishSettings source.publishsettings `
-            -DestinationPublishSettings destination.publishsettings
+            -DestinationPublishSettings destination.publishsettings `
+            -IncludeAppPool
 			
 	} catch {
 		$exception = $_.Exception
@@ -179,8 +180,8 @@ try {
     Ensure-WebAdministrationModule
     Build-PublishProfiles
     $site = Get-Site
-    Stop-SiteAndPool $site
     try {
+        Stop-SiteAndPool $site
         Sync-Sites
     } finally {
         Start-SiteAndPool $site
