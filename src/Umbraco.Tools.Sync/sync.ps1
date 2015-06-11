@@ -1,4 +1,4 @@
-param($siteName, $destinationServer, $remoteUserName, $remotePassword)
+param($siteName, $destinationSiteName, $destinationRootPath, $destinationServer, $remoteUserName, $remotePassword)
 
 function Ensure-WDPowerShellMode {
 	$WDPowerShellSnapin = Get-PSSnapin -Name WDeploySnapin3.0 -ErrorAction:SilentlyContinue
@@ -132,9 +132,11 @@ function Sync-Sites {
 
         $Result = Sync-WDSite -ErrorAction:Stop `
             -SourceSite $siteName `
-            -DestinationSite $siteName `
+            -DestinationSite $destinationSiteName `
+            -SitePhysicalPath "$destinationRootPath\$destinationSiteName" `
             -SourcePublishSettings source.publishsettings `
             -DestinationPublishSettings destination.publishsettings `
+            -SiteBinding "*:80:$destinationSiteName.$destinationServer" `
             -IncludeAppPool
 			
 	} catch {
@@ -157,7 +159,7 @@ function Set-Permissions($localSite) {
 
         $Result = Set-WDAcl -ErrorAction:Stop `
             -DestinationPublishSettings destination.publishsettings `
-            -Destination $siteName `
+            -Destination $destinationSiteName `
             -SetAclUser "IIS AppPool\$appPoolName" `
             -SetAclAccess $rights
 
