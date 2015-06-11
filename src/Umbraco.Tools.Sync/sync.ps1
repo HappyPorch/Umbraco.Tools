@@ -57,6 +57,75 @@ function Build-PublishProfiles {
 	Write-Host "OK" -ForegroundColor Green
 }
 
+function Get-Site {
+	try {
+		Write-Host " - Obtaining local site '$siteName' information..." -NoNewline
+
+        $site = Get-Website -Name $siteName        
+	} catch {
+		$exception = $_.Exception
+		Write-Host "ERROR" -ForegroundColor:Red
+		throw " - Get-Website failed: $exception"
+	}
+	
+	Write-Host "OK" -ForegroundColor Green
+    return $site
+}
+
+function Stop-SiteAndPool($localSite) {
+	try {
+		Write-Host " - Stopping local site '$siteName'..." -NoNewline
+
+        Stop-WebSite $siteName
+	} catch {
+		$exception = $_.Exception
+		Write-Host "ERROR" -ForegroundColor:Red
+		throw " - Stop-WebSite: $exception"
+	}
+	
+	Write-Host "OK" -ForegroundColor Green
+
+	try {
+        $appPool = $localSite.applicationPool
+        Write-Host " - Stopping local app pool '$appPool'..." -NoNewline
+
+        Stop-WebAppPool $appPool
+	} catch {
+		$exception = $_.Exception
+		Write-Host "ERROR" -ForegroundColor:Red
+		throw " - Stop-WebAppPool: $exception"
+	}
+	
+	Write-Host "OK" -ForegroundColor Green
+}
+
+function Start-SiteAndPool($localSite) {
+	try {
+        $appPool = $localSite.applicationPool
+        Write-Host " - Starting local app pool '$appPool'..." -NoNewline
+
+        Start-WebAppPool $appPool
+	} catch {
+		$exception = $_.Exception
+		Write-Host "ERROR" -ForegroundColor:Red
+		throw " - Start-WebAppPool: $exception"
+	}
+	
+	Write-Host "OK" -ForegroundColor Green
+
+	try {
+		Write-Host " - Starting local site '$siteName'..." -NoNewline
+
+        Start-WebSite $siteName
+	} catch {
+		$exception = $_.Exception
+		Write-Host "ERROR" -ForegroundColor:Red
+		throw " - Start-WebSite: $exception"
+	}
+	
+	Write-Host "OK" -ForegroundColor Green
+}
+
 function Sync-Sites {
 	try {
 		Write-Host " - Syncing site '$siteName' to server '$destinationServer'..." -NoNewline
@@ -66,8 +135,6 @@ function Sync-Sites {
             -DestinationSite $siteName `
             -SourcePublishSettings source.publishsettings `
             -DestinationPublishSettings destination.publishsettings
-            #            -IncludeAppPool `
-
 			
 	} catch {
 		$exception = $_.Exception
@@ -80,12 +147,11 @@ function Sync-Sites {
 	$Result | Out-String
 }
 
-function Set-Permissions {
+function Set-Permissions($localSite) {
 	try {
 		Write-Host " - Setting folder permissions for '$siteName' on '$destinationServer'..." -NoNewline
 
-        $site = Get-Website -Name $siteName
-        $appPoolName = $site.applicationPool
+        $appPoolName = $localSite.applicationPool
         $rights = [System.Security.AccessControl.FileSystemRights]"ListDirectory,ReadData,Traverse,ExecuteFile,ReadAttributes,ReadPermissions,Read,ReadAndExecute,Modify,Write"
 
         $Result = Set-WDAcl -ErrorAction:Stop `
@@ -106,15 +172,21 @@ function Set-Permissions {
 }
 
 try {
-	
+
 	Write-Host "deployment started"
 	
 	Ensure-WDPowerShellMode
     Ensure-WebAdministrationModule
     Build-PublishProfiles
-	Sync-Sites
-    Set-Permissions
-	
+    $site = Get-Site
+    Stop-SiteAndPool $site
+    try {
+        Sync-Sites
+    } finally {
+        Start-SiteAndPool $site
+    }
+    Set-Permissions $site
+
 	Write-Host "deployment finished successfully"
 	
 } catch {
