@@ -1,4 +1,22 @@
-param($siteName, $destinationSiteName, $destinationRootPath, $destinationServer, $remoteUserName, $remotePassword)
+﻿param(
+    [Parameter(Mandatory=$True)]
+    [string]$siteName,
+
+    [Parameter(Mandatory=$True)]
+    [string]$destinationSiteName,
+     
+    [Parameter(Mandatory=$True)]
+    [string]$destinationRootPath,
+     
+    [Parameter(Mandatory=$True)]
+    [string]$destinationServer, 
+
+    [switch]$changeDbFromServerToFile,
+
+    [string]$remoteUserName, 
+
+    [string]$remotePassword
+)
 
 function Ensure-WDPowerShellMode {
 	$WDPowerShellSnapin = Get-PSSnapin -Name WDeploySnapin3.0 -ErrorAction:SilentlyContinue
@@ -9,7 +27,8 @@ function Ensure-WDPowerShellMode {
 		Add-PsSnapin -Name WDeploySnapin3.0 -ErrorAction:SilentlyContinue -ErrorVariable e | Out-Null
 		
 		if($? -eq $false) {
-			throw " - failed to load the Web Deploy 3.0 PowerShell snap-in: $e"
+            Write-Host "ERROR" -ForegroundColor:Red
+			throw $e
 		} else {
 			Write-Host "OK" -ForegroundColor Green
 		}
@@ -27,7 +46,8 @@ function Ensure-WebAdministrationModule {
 		Import-Module WebAdministration -ErrorAction:SilentlyContinue -ErrorVariable e | Out-Null
 		
 		if($? -eq $false) {
-			throw " - failed to import the Web Administration module: $e"
+            Write-Host "ERROR" -ForegroundColor:Red
+			throw $e
 		} else {
 			Write-Host "OK" -ForegroundColor Green
 		}
@@ -128,7 +148,9 @@ function Start-SiteAndPool($localSite) {
 
 function Sync-Sites {
 	try {
-		Write-Host " - Syncing site '$siteName' to server '$destinationServer'..." -NoNewline
+        $hostname = "$destinationSiteName.$destinationServer" 
+
+		Write-Host " - Syncing site '$siteName' to $hostname..." -NoNewline
 
         $Result = Sync-WDSite -ErrorAction:Stop `
             -SourceSite $siteName `
@@ -136,13 +158,44 @@ function Sync-Sites {
             -SitePhysicalPath "$destinationRootPath\$destinationSiteName" `
             -SourcePublishSettings source.publishsettings `
             -DestinationPublishSettings destination.publishsettings `
-            -SiteBinding "*:80:$destinationSiteName.$destinationServer" `
+            -SiteBinding "*:80:$hostname" `
             -IncludeAppPool
 			
 	} catch {
 		$exception = $_.Exception
 		Write-Host "ERROR" -ForegroundColor:Red
 		throw " - Sync-WDSite failed: $exception"
+	}
+	
+	Write-Host "OK" -ForegroundColor Green
+	Write-Host "Summary:" -NoNewline
+	$Result | Out-String
+}
+
+function Sync-Dbs ($localSite) {
+
+	try {
+        $destinationConnectionString = "Data Source=.\SQLEXPRESS;Initial Catalog=$destinationSiteName;Integrated Security=True"
+
+		Write-Host " - Syncing db to '$destinationServer' as ($destinationConnectionString)..." -NoNewline
+
+        $sitePhysicalPath = $localSite.physicalPath;
+        $xml = [xml](Get-Content "$sitePhysicalPath\Web.config")
+        $connectionStringNode = $xml.configuration.connectionStrings.add | ? { $_.name -eq "umbracoDbDSN" }
+
+        $sourceConnectionString = $connectionStringNode.connectionString
+
+        $Result = Sync-WDSQLDatabase -ErrorAction:Stop `
+            -SourceDatabase $sourceConnectionString `
+            -DestinationDatabase "$destinationConnectionString" `
+            -DestinationSettings @{ dropDestinationDatabase = $True } `
+            -SourcePublishSettings source.publishsettings `
+            -DestinationPublishSettings destination.publishsettings
+		
+	} catch {
+		$exception = $_.Exception
+		Write-Host "ERROR" -ForegroundColor:Red
+		throw " - Sync-Dbs failed: $exception"
 	}
 	
 	Write-Host "OK" -ForegroundColor Green
@@ -185,6 +238,9 @@ try {
     try {
         Stop-SiteAndPool $site
         Sync-Sites
+        if ($changeDbFromServerToFile) {
+            Sync-Dbs $site -ErrorAction:Stop
+        }
     } finally {
         Start-SiteAndPool $site
     }
