@@ -163,15 +163,24 @@ function Sync-Sites {
 
 		Write-Host " - Syncing site '$siteName' to $hostname..." -NoNewline
 
-        & "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe" -verb:sync -verbose `
-            -source:appHostConfig=`'$siteName`' `
-            -dest:appHostConfig=`'$destinationSiteName`',computername=$destinationServer,username=$remoteUserName,password=$remotePassword `
-            -skip:objectName=environmentVariables `
-            -skip:objectName=binding `
-            -enableLink:AppPoolExtension `
-            -replace:objectName=virtualDirectory,scopeAttributeName=physicalPath,match=`'^.*:\\.*$`',replace=`'$physicalPath`' `
-            -postSync:runCommand="`"%windir%\system32\inetsrv\appcmd.exe set site /site.name:$destinationSiteName /+bindings.[protocol='http',bindingInformation='*:80:$hostname']`"" 
+        $CMD =  "`"C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe`""
+
+        $AllArgs =  @(
+            "-verb:sync", 
+            "-verbose", 
+            "-source:appHostConfig=`'$siteName`'",
+            "-dest:appHostConfig=`'$destinationSiteName`',computername=$destinationServer,username=$remoteUserName,password=$remotePassword",
+            "-skip:objectName=environmentVariables",
+            "-skip:objectName=binding",
+            "-enableLink:AppPoolExtension",
+            "-replace:objectName=virtualDirectory,scopeAttributeName=physicalPath,match=`'^.*:\\.*$`',replace=`'$physicalPath`'",
+            "-postSync:runCommand=`"%windir%\system32\inetsrv\appcmd.exe set site /site.name:$destinationSiteName /+bindings.[protocol='http',bindingInformation='*:80:$hostname']`""
+        )        
+        
+        $command = "$CMD $AllArgs"     
 			
+        cmd.exe /c "`"$command`"" | Write-Host
+
 	} catch {
 		$exception = $_.Exception
 		Write-Host "ERROR" -ForegroundColor:Red
@@ -192,23 +201,28 @@ function Sync-Dbs ($localSite) {
         $sitePhysicalPath = $localSite.physicalPath;
         $xml = [xml](Get-Content "$sitePhysicalPath\Web.config")
         $connectionStringNode = $xml.configuration.connectionStrings.add | ? { $_.name -eq "umbracoDbDSN" }
-
-        $sourceConnectionString = $connectionStringNode.connectionString
+        if ($connectionStringNode -eq $null) {
+            $connectionStringNode = $xml.configuration.appSettings.add | ? { $_.key -eq "umbracoDbDSN" }
+            $sourceConnectionString = $connectionStringNode.value
+        } else {
+            $sourceConnectionString = $connectionStringNode.connectionString
+        }
 
         $Result = Sync-WDSQLDatabase -ErrorAction:Stop `
             -SourceDatabase $sourceConnectionString `
+            -SourceSettings @{ 
+               CopyAllUsers = $False;
+               ScriptDropsFirst = $True;
+            } `
             -DestinationDatabase "$destinationConnectionString" `
             -DestinationPublishSettings destination.publishsettings
-
+		
 	} catch {
 		Write-Host "ERROR" -ForegroundColor:Red
 		throw $_.Exception
 	}
 	
 	Write-Host "OK" -ForegroundColor Green
-	Write-Host "Summary:" -NoNewline
-	$Result | Out-String
-
     return $destinationConnectionString
 }
 
@@ -222,7 +236,12 @@ function Replace-ConnectionString($siteFolder, $connectionString) {
         $script = "& {
             [xml]`$xml = Get-Content `"$webConfigFilename`"
             `$connectionStringNode = `$xml.configuration.connectionStrings.add | ? { `$_.name -eq `"umbracoDbDSN`" }
-            `$connectionStringNode.connectionString = `"$connectionString`"
+            if (`$connectionStringNode -eq `$null) {
+                `$connectionStringNode = `$xml.configuration.appSettings.add | ? { `$_.key -eq `"umbracoDbDSN`" }
+                `$connectionStringNode.value = `"$connectionString`"
+            } else {
+                `$connectionStringNode.connectionString = `"$connectionString`"
+            }
             `$xml.Save(`"$webConfigFilename`") 
         }"
 
@@ -233,7 +252,6 @@ function Replace-ConnectionString($siteFolder, $connectionString) {
 
         $Result = Invoke-WDCommand $command `
             -ErrorAction:Stop `
-            -SourcePublishSettings source.publishsettings `
             -DestinationPublishSettings destination.publishsettings `
             -DestinationSettings @{ dontUseCommandExe = $True }
 		
@@ -244,9 +262,6 @@ function Replace-ConnectionString($siteFolder, $connectionString) {
 	}
 	
 	Write-Host "OK" -ForegroundColor Green
-	Write-Host "Summary:" -NoNewline
-	$Result | Out-String
-
 }
 
 function Set-Permissions($localSite) {
