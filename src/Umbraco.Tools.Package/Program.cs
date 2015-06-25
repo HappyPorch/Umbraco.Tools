@@ -13,7 +13,7 @@ namespace Umbraco.Tools.Package
     {
         public string[] Dlls { get; set; }
         public string PackageXmlTemplate { get; set; }
-        public string PluginFolder { get; set; }
+        public string[] IncludeFolders { get; set; }
     }
 
     public class Program
@@ -44,7 +44,7 @@ settings.json structure:
 {
     dlls: ['DLL1', 'DLL2'],
     packageXmlTemplate: 'PATH_TO_PACKAGE.XML'
-    pluginFolder: 'PATH_TO_PLUGIN_FOLDER'
+    includeFolders: ['PATH_TO_PLUGIN', 'PATH_TO_XSLT']
 }");
                 Console.ReadLine();
                 return;
@@ -58,7 +58,11 @@ settings.json structure:
 
             Console.WriteLine("Dlls: " + string.Join(",", config.Dlls));
             Console.WriteLine("PackageXmlTemplate: " + config.PackageXmlTemplate);
-            Console.WriteLine("PluginFolder: " + config.PluginFolder);
+            Console.WriteLine("IncludeFolders:" + (config.IncludeFolders.Any() ? string.Empty : " None"));
+            foreach (var folder in config.IncludeFolders)
+            {
+                Console.WriteLine($"  {folder}");
+            }
 
             Console.WriteLine();
             Console.WriteLine("Processing...");
@@ -72,13 +76,10 @@ settings.json structure:
                     builder.AddDll(dll);
                 }
 
-                var directory = new DirectoryInfo(config.PluginFolder);
-                var files = directory.GetFiles("*.*", SearchOption.AllDirectories);
-
-                foreach (var file in files)
+                foreach (var folder in config.IncludeFolders)
                 {
-                    Console.WriteLine($"Adding {file.FullName}.");
-                    builder.AddBackofficeFile(file.FullName);
+                    Console.WriteLine($"Processing {folder}.");
+                    builder.AddPluginFolder(folder);
                 }
 
                 builder.Done();

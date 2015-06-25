@@ -33,30 +33,35 @@ namespace Umbraco.Tools.Package
             } 
         }
 
-        public void AddBackofficeFile(string filename)
+        public void AddPluginFolder(string directory)
         {
-            var file = new FileInfo(filename);
-            if (!file.Exists)
-                throw new InvalidOperationException($"The requested file {filename} does not exist");
+            var dirInfo = new DirectoryInfo(directory);
+            var files = dirInfo.GetFiles("*.*", SearchOption.AllDirectories);
 
-            var destination = GetBackOfficeFileDestinationDir(file);
-            using (var fileStream = file.Open(FileMode.Open))
+            foreach (var file in files)
             {
-                AddFile(file.Name, destination, fileStream);
+                Console.WriteLine($"Adding {file.FullName}.");
+                var destinationDirectory = GetBackOfficeFileDestinationDir(dirInfo, file);
+                using (var fileStream = file.Open(FileMode.Open))
+                {
+                    AddFile(file.Name, destinationDirectory, fileStream);
+                }
             }
         }
 
-        private string GetBackOfficeFileDestinationDir(FileInfo file)
+
+        private string GetBackOfficeFileDestinationDir(DirectoryInfo rootDir, FileInfo file)
         {
             var dirs = new Stack<string>();
             var currentDir = file.Directory;
-            while (currentDir.Name != "App_Plugins")
+            while (currentDir.FullName != rootDir.FullName)
             {
                 dirs.Push(currentDir.Name);
                 currentDir = currentDir.Parent;
             }
+            dirs.Push(rootDir.Name);
+
             var sb = new StringBuilder();
-            sb.Append("/App_Plugins");
             while (dirs.Count > 0)
             {
                 sb.Append("/");

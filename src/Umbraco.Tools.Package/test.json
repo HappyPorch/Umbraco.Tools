@@ -1,6 +1,6 @@
 ﻿{
-    "dlls": ["../../../the-goring/Endzone.Describe/bin/Debug/Endzone.Describe.dll"],
-    "packageXmlTemplate": "../../../the-goring/Endzone.Describe/Package.xml",
-    "pluginFolder": "../../../the-goring/website/App_Plugins/Endzone"
+  "dlls": [ "../../../uCop/src/Endzone.uCop/bin/Debug/Endzone.uCop.dll" ],
+  "packageXmlTemplate": "../../../uCop/src/Endzone.uCop/Package.xml",
+  "includeFolders": [ "../../../uCop/src/Endzone.uCop/App_Plugins" ]
 }
 
