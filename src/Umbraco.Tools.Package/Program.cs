@@ -11,9 +11,22 @@ namespace Umbraco.Tools.Package
 {
     public class ApplicationSettings
     {
-        public string[] Dlls { get; set; }
+        private string[] _includeFolders;
+        private string[] _dlls;
+
+        public string[] Dlls
+        {
+            get { return _dlls ?? (_dlls = new string[0]); }
+            set { _dlls = value; }
+        }
+
         public string PackageXmlTemplate { get; set; }
-        public string[] IncludeFolders { get; set; }
+
+        public string[] IncludeFolders
+        {
+            get { return _includeFolders ?? (_includeFolders = new string[0]); }
+            set { _includeFolders = value; }
+        }
     }
 
     public class Program
