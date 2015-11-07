@@ -81,6 +81,12 @@ settings.json structure:
             Console.WriteLine("Processing...");
             Console.WriteLine();
 
+            // ReSharper disable once PossibleNullReferenceException
+            var workingDirectory = new FileInfo(args[0]).Directory.FullName;
+
+            // set the current directory to the one of the pack.json file, as the paths within are relative to the it
+            Directory.SetCurrentDirectory(workingDirectory);
+
             using (var builder = new PackageBuilder(config.PackageXmlTemplate, "Package.zip"))
             {
                 foreach (var dll in config.Dlls)
