@@ -4,7 +4,7 @@ Custom tools to aid Umbraco plugin development and maintenance in general.
 These tools are automatically built and deployed to NuGet by Endzone.io's AppVeyor account.
 
 ##Building the Solution
-We sse Visual Studio 2015 RTM with [Microsoft ASP.NET and Web Tools 2015 (Beta6) – Visual Studio 2015](http://www.microsoft.com/en-us/download/details.aspx?id=48222).
+We use Visual Studio 2015 RTM with [Microsoft ASP.NET and Web Tools 2015 (Beta6) – Visual Studio 2015](http://www.microsoft.com/en-us/download/details.aspx?id=48222).
 
 ##Tooling
 
