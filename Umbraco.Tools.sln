@@ -1,16 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.22823.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.26403.7
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{FF441342-DFE1-42C1-A7FF-50BDB12F7991}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{C84B1A2C-1656-4D09-868B-A2603B1D890B}"
-	ProjectSection(SolutionItems) = preProject
-		global.json = global.json
-	EndProjectSection
-EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Umbraco.Tools.Package", "src\Umbraco.Tools.Package\Umbraco.Tools.Package.xproj", "{B57B3BA9-AD1C-42B8-B796-D2341114A4E9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Umbraco.Tools.Package", "src\Umbraco.Tools.Package\Umbraco.Tools.Package.csproj", "{759834E5-3A25-447D-A22E-092A33507BDE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -18,15 +13,15 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{B57B3BA9-AD1C-42B8-B796-D2341114A4E9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B57B3BA9-AD1C-42B8-B796-D2341114A4E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B57B3BA9-AD1C-42B8-B796-D2341114A4E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B57B3BA9-AD1C-42B8-B796-D2341114A4E9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{759834E5-3A25-447D-A22E-092A33507BDE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{759834E5-3A25-447D-A22E-092A33507BDE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{759834E5-3A25-447D-A22E-092A33507BDE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{759834E5-3A25-447D-A22E-092A33507BDE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{B57B3BA9-AD1C-42B8-B796-D2341114A4E9} = {FF441342-DFE1-42C1-A7FF-50BDB12F7991}
+		{759834E5-3A25-447D-A22E-092A33507BDE} = {FF441342-DFE1-42C1-A7FF-50BDB12F7991}
 	EndGlobalSection
 EndGlobal

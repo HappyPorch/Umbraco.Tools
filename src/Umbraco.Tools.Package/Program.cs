@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.Framework.ConfigurationModel;
-using Newtonsoft.Json;
-using System.IO;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using System;
+using System.IO;
+using System.Linq;
 
 namespace Umbraco.Tools.Package
 {
@@ -31,7 +28,7 @@ namespace Umbraco.Tools.Package
 
     public class Program
     {
-        public void Main(string[] args)
+        public static void Main(string[] args)
         {
             Console.WriteLine(@"
   ______ _   _ _____ __________  _   _ ______      
